@@ -1,15 +1,20 @@
+// TODO: do getMessages repeatedly until there's nothing left, rather than requiring to run this script multiple times.
 const https = require('https');
+const async = require('async');
+const fs = require('fs');
 
-// paste values in here if you want this to work
-const token = '';
-const user = '';
-const channel = '';
+// read keys from a json file on disk
+const keyObj = JSON.parse(fs.readFileSync('keys.json', 'utf8'));
+const token = keyObj.token;
+const user = keyObj.user;
+const channel = keyObj.channel;
 
 // non-user-specific constants
 const protocol = 'https:';
 const hostname = 'slack.com';
-const batchSize = 10;   // up to 1000
+const batchSize = 1000;
 const modifyText = 'lol im a spy';
+const parallelLimitCount = 5;
 
 function getMessages(cb) {
     const path = '/api/im.history?token=' + token + '&channel=' + channel + '&count=' + batchSize;
@@ -50,7 +55,7 @@ function modifyMessage(timestamp, cb) {
         res.on('data', (d) => {
             dataBuf.push(d.toString());
         }).on('end', () => {
-            cb && cb(JSON.parse(dataBuf.join('')));
+            cb && cb();
         });
     }).on('error', (e) => {
         console.log('modify message failed');
@@ -73,7 +78,7 @@ function deleteMessage(timestamp, cb) {
         res.on('data', (d) => {
             dataBuf.push(d.toString());
         }).on('end', () => {
-            cb && cb(JSON.parse(dataBuf.join('')));
+            cb && cb();
         });
     }).on('error', (e) => {
         console.log('delete message failed');
@@ -82,7 +87,15 @@ function deleteMessage(timestamp, cb) {
 }
 
 getMessages((d) => {
-    // TODO: handroll async.parallelLimit?
-    //    modifyMessage(d.messages[5].ts);
-//    deleteMessage(d.messages[5].ts);
+    async.parallelLimit(d.messages.map((oneMessage) => {
+        return (cb) => {
+            modifyMessage(oneMessage.ts, cb);
+        };
+    }), parallelLimitCount, () => {
+        async.parallelLimit(d.messages.map((oneMessage) => {
+            return (cb) => {
+                deleteMessage(oneMessage.ts, cb);
+            };
+        }), parallelLimitCount);
+    });
 });
