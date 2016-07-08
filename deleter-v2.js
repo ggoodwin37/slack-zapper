@@ -89,6 +89,7 @@ function deleteMessage(timestamp, cb) {
 getMessages((d) => {
     async.parallelLimit(d.messages.map((oneMessage) => {
         return (cb) => {
+            // TODO: don't modify messages that don't belong to this user
             modifyMessage(oneMessage.ts, cb);
         };
     }), parallelLimitCount, () => {
