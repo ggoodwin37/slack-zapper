@@ -2,7 +2,7 @@
   "name": "slack-zapper",
   "version": "1.0.0",
   "description": "",
-  "main": "deleter-v2.js",
+  "main": "slack-zapper.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
