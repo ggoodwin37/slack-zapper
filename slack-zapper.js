@@ -17,7 +17,8 @@ const modifyText = 'lol im a spy';
 const parallelLimitCount = 5;
 
 function getMessages(cb) {
-    const path = '/api/im.history?token=' + token + '&channel=' + channel + '&count=' + batchSize;
+    const oldest = '1448091815.00014';  // or set to null to omit
+    const path = '/api/im.history?token=' + token + '&channel=' + channel + '&count=' + batchSize + (oldest ? '&oldest=' + oldest : '');
     const options = {
         protocol: protocol,
         hostname: hostname,
